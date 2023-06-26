@@ -173,7 +173,10 @@ resource "aws_ecs_task_definition" "hello_world" {
         "containerPort": 3000,
         "hostPort": 3000
       }
-    ]
+    ],
+    "healthcheck": {
+      "command": ["CMD-SHELL", "curl -f http://localhost:3000 || exit 1"]
+    }
   }
 ]
 DEFINITION

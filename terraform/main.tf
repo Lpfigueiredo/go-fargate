@@ -207,6 +207,12 @@ resource "aws_ecs_cluster" "main" {
   name = "example-cluster"
 }
 
+resource "aws_ecs_cluster_capacity_providers" "example" {
+  cluster_name = aws_ecs_cluster.example.name
+
+  capacity_providers = ["FARGATE_SPOT"]
+}
+
 resource "aws_ecs_service" "hello_world" {
   name            = "hello-world-service"
   cluster         = aws_ecs_cluster.main.id

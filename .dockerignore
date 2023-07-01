@@ -1,5 +1,7 @@
 **
 
-!**/*.go
+!*.go
+!router/*.go
+
 !go.mod
 !go.sum

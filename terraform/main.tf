@@ -1,3 +1,7 @@
+resource "aws_ecr_repository" "hello_world" {
+  name = "hello_world"
+}
+
 data "aws_availability_zones" "available_zones" {
   state = "available"
 }
@@ -103,10 +107,6 @@ resource "aws_lb_listener" "hello_world" {
   }
 }
 
-resource "aws_ecr_repository" "hello_world" {
-  name = "hello_world"
-}
-
 resource "aws_iam_role" "ecs_task_execution_role" {
   name = "role-name"
 
@@ -155,8 +155,8 @@ resource "aws_ecs_task_definition" "hello_world" {
   family                   = "hello-world-app"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = 128
-  memory                   = 256
+  cpu                      = 256
+  memory                   = 512
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_role.arn
 
@@ -164,8 +164,8 @@ resource "aws_ecs_task_definition" "hello_world" {
 [
   {
     "image": "${aws_ecr_repository.hello_world.repository_url}:latest",
-    "cpu": 128,
-    "memory": 256,
+    "cpu": 256,
+    "memory": 512,
     "name": "hello-world-app",
     "networkMode": "awsvpc",
     "portMappings": [

@@ -159,6 +159,10 @@ resource "aws_ecs_task_definition" "hello_world" {
   memory                   = 512
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_role.arn
+  runtime_platform {
+    operating_system_family = "LINUX"
+    cpu_architecture        = "ARM64"
+  }
 
   container_definitions = <<DEFINITION
 [
@@ -235,8 +239,8 @@ resource "aws_ecs_service" "hello_world" {
 }
 
 resource "aws_appautoscaling_target" "ecs_target" {
-  max_capacity       = 2
-  min_capacity       = 1
+  max_capacity       = var.app_count + 1
+  min_capacity       = var.app_count
   resource_id        = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.hello_world.name}"
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"

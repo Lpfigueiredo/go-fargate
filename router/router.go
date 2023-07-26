@@ -10,7 +10,7 @@ func InitRouter() *gin.Engine {
 	router := gin.Default()
 
 	router.GET("/", func(context *gin.Context) {
-		context.String(http.StatusOK, "hello gin")
+		context.String(http.StatusOK, "hello gin in arm64")
 	})
 	return router
 }

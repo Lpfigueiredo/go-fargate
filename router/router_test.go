@@ -14,5 +14,5 @@ func TestRouter(t *testing.T) {
 	req, _ := http.NewRequest(http.MethodGet, "/", nil)
 	router.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Equal(t, "hello gin", w.Body.String())
+	assert.Equal(t, "hello gin in arm64", w.Body.String())
 }

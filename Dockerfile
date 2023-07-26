@@ -8,7 +8,7 @@ WORKDIR /app
 COPY . .
 RUN go mod download
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /go-docker
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o /go-docker
 
 # Run the tests in the container
 FROM build-stage AS run-test-stage

@@ -10,9 +10,6 @@ ARG TARGETARCH
 
 WORKDIR /app
 
-COPY . .
-RUN go mod download
-
 RUN --mount=target=. \
     --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg \

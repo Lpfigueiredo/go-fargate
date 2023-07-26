@@ -1,5 +1,6 @@
 resource "aws_ecr_repository" "hello_world" {
   name = "hello_world"
+  force_delete = true
 }
 
 data "aws_availability_zones" "available_zones" {

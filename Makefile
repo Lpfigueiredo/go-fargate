@@ -2,8 +2,6 @@
 
 IMAGE ?= yourapplication:latest
 
-export DOCKER_CLI_EXPERIMENTAL=enabled
-
 .PHONY: build # Build the container image
 build:
 	@docker buildx create --use --name=crossplat --node=crossplat && \

@@ -10,7 +10,7 @@ ARG TARGETOS TARGETARCH
 RUN --mount=target=. \
     --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg \
-    CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -ldflags="-w -s" -o /go-docker
+    CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -ldflags="-w -s" -o /go-docker
 
 # Run the tests in the container
 FROM build-stage AS run-test-stage

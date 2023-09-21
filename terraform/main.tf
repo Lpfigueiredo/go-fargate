@@ -162,6 +162,10 @@ resource "aws_ecs_task_definition" "hello_world" {
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_role.arn
 
+  runtime_platform {
+    operating_system_family = "LINUX"
+    cpu_architecture        = "ARM64"
+  }
 
   container_definitions = <<DEFINITION
 [
@@ -240,8 +244,8 @@ resource "aws_iam_instance_profile" "ecs_agent" {
 
 resource "aws_launch_template" "foobar" {
   name_prefix            = "foobar"
-  image_id               = "ami-0d0fb173ee55e842d"
-  instance_type          = "t2.micro"
+  image_id               = "ami-0f2e11fc415bb857b"
+  instance_type          = "t4g.nano"
   user_data              = filebase64("${path.module}/ecs.sh")
   vpc_security_group_ids = [aws_security_group.hello_world_task.id]
 

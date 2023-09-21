@@ -1,5 +1,5 @@
 resource "aws_ecr_repository" "hello_world" {
-  name = "hello_world"
+  name         = "hello_world"
   force_delete = true
 }
 
@@ -127,6 +127,7 @@ resource "aws_iam_role" "ecs_task_execution_role" {
 }
 EOF
 }
+
 resource "aws_iam_role" "ecs_task_role" {
   name = "role-name-task"
 
@@ -153,24 +154,20 @@ resource "aws_iam_role_policy_attachment" "ecs-task-execution-role-policy-attach
 }
 
 resource "aws_ecs_task_definition" "hello_world" {
-  family                   = "hello-world-app"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = 256
-  memory                   = 512
+  family       = "hello-world-app"
+  network_mode = "awsvpc"
+
+  requires_compatibilities = ["EC2"]
+  memory                   = 128
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_role.arn
-  runtime_platform {
-    operating_system_family = "LINUX"
-    cpu_architecture        = "ARM64"
-  }
+
 
   container_definitions = <<DEFINITION
 [
   {
     "image": "${aws_ecr_repository.hello_world.repository_url}:latest",
-    "cpu": 256,
-    "memory": 512,
+    "memory": 128,
     "name": "hello-world-app",
     "networkMode": "awsvpc",
     "portMappings": [
@@ -212,10 +209,88 @@ resource "aws_ecs_cluster" "main" {
   name = "example-cluster"
 }
 
+data "aws_iam_policy_document" "ecs_agent" {
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "ecs_agent" {
+  name               = "ecs-agent"
+  assume_role_policy = data.aws_iam_policy_document.ecs_agent.json
+}
+
+
+resource "aws_iam_role_policy_attachment" "ecs_agent" {
+  role       = aws_iam_role.ecs_agent.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+}
+
+resource "aws_iam_instance_profile" "ecs_agent" {
+  name = "ecs-agent"
+  role = aws_iam_role.ecs_agent.name
+
+  depends_on = [aws_iam_role.ecs_agent]
+}
+
+resource "aws_launch_template" "foobar" {
+  name_prefix            = "foobar"
+  image_id               = "ami-0d0fb173ee55e842d"
+  instance_type          = "t2.micro"
+  user_data              = filebase64("${path.module}/ecs.sh")
+  vpc_security_group_ids = [aws_security_group.hello_world_task.id]
+
+  iam_instance_profile {
+    name = aws_iam_instance_profile.ecs_agent.name
+  }
+
+  depends_on = [aws_iam_instance_profile.ecs_agent]
+}
+
+resource "aws_autoscaling_group" "test" {
+  desired_capacity    = 1
+  max_size            = 1
+  min_size            = 1
+  vpc_zone_identifier = aws_subnet.private.*.id
+
+  launch_template {
+    id      = aws_launch_template.foobar.id
+    version = "$Latest"
+  }
+
+  tag {
+    key                 = "AmazonECSManaged"
+    value               = true
+    propagate_at_launch = true
+  }
+}
+
+resource "aws_ecs_capacity_provider" "test" {
+  name = "test"
+
+  auto_scaling_group_provider {
+    auto_scaling_group_arn = aws_autoscaling_group.test.arn
+
+    managed_scaling {
+      maximum_scaling_step_size = 1000
+      minimum_scaling_step_size = 1
+      status                    = "ENABLED"
+      target_capacity           = 10
+    }
+  }
+}
+
 resource "aws_ecs_cluster_capacity_providers" "example" {
   cluster_name = aws_ecs_cluster.main.name
 
-  capacity_providers = ["FARGATE_SPOT"]
+  capacity_providers = [aws_ecs_capacity_provider.test.name]
+
+  depends_on = [aws_ecs_capacity_provider.test]
 }
 
 resource "aws_ecs_service" "hello_world" {
@@ -223,7 +298,7 @@ resource "aws_ecs_service" "hello_world" {
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.hello_world.arn
   desired_count   = var.app_count
-  launch_type     = "FARGATE"
+  launch_type     = "EC2"
 
   network_configuration {
     security_groups = [aws_security_group.hello_world_task.id]
